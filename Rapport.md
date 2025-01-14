@@ -26,7 +26,7 @@ La vulnérabilité repose sur une **injection XSS stockée**, un type d'attaque 
 - **Ne subissent pas de prétraitement approprié**, comme la validation ou le filtrage, avant d'être utilisées.
 - **Sont affichées ou exécutées directement** dans le code ou la page web sans mesures de sécurité.
 
-Cette vulnérabilité, référencée sous le code  [CVE-2024-39123](https://www.cvedetails.com/cve/CVE-2024-39123/), permet aux attaquants d'exploiter des failles présentes dans des champs utilisateur insuffisamment protégés.
+Cette faille, référencée sous le code  [CVE-2024-39123](https://www.cvedetails.com/cve/CVE-2024-39123/), permet aux attaquants d'exploiter des failles présentes dans des champs utilisateur insuffisamment protégés.
 
 En l'absence de précautions, un attaquant peut injecter du code malveillant dans ces champs. Ce code est alors stocké sur le serveur (dans la base de données) et se retrouve **inclus dans le contenu dynamique** de la page.
 
@@ -114,7 +114,7 @@ Pour protéger un réseau contenant des machines vulnérables, voici les mesures
 
 ## Référencer parmi les bonnes pratiques, celles qu’il faudrait utiliser pour limiter cette menace.
 
-Il faut appliquer le principe "zéro trust".Dans ce cas là, ne jamais faire confiance aux données qui sont saisies par l'utilisateur.
+Il faut appliquer le principe "zéro trust".Dans ce cas-là, ne jamais faire confiance aux données qui sont saisies par l'utilisateur.
 
 - Validation côté serveur et côté client : Toujours valider les entrées, non seulement au niveau de l'interface utilisateur, mais aussi au niveau du serveur, pour s'assurer que seules des données sûres sont traitées.
 
@@ -199,31 +199,75 @@ On prend pour hypothèse que Calibre est à la version 0.6.12 donc qu'il n'y a p
 
 ## Pour cette faille proposer une expérimentation permettant de mettre en évidence la vulnérabilité et son exploitation :
 
-Aller dans le répertoire puis exécuter les commandes suivantes :
-```
-docker build -t calibre-web .
-docker run -d -p 8083:8083 calibre-web
-```
-
-Ensuite, il faut lancer votre navigateur favori et aller sur l'adresse http://localhost:8083
-
-Vous devriez alors arriver sur cette page.
-
-![alt text](img/conf_db.png)
-
-Il faut renseigner le fichier /library/metadata.db.
-
-Puis il faut se connecter (username : admin et password : admin123).
-
-Ensuite, il faut cliquer sur le livre "A Marriage Settlement" et vous devriez avoir une surprise !
+## Expérimentation et mise en évidence de la vulnérabilité et de son exploitation
+**Nous nous sommes inspirés de cet [exemple d'exploitation de la faille](https://www.exploit-db.com/exploits/52067) afin d'élaborer cette démonstration**
 
 
+### Infrastructure utilisée
 
-En mettant en place une machine virtuelle (peut être une image docker : donner le DockerFile, une image vagrant: donner le fichier Vagrantfile) avec le service vulnérable, le rapport indiquera comment cette machine a été créée.
-En décrivant une procédure d’exploitation de la faille en expliquant son mécanisme. Cette exploitation peut utiliser le framework metasploit ou utiliser des exploits disponibles sur le Web(en citant vos sources)
 
-Joindre au devoir un glossaire des termes utilisés 
-Joindre au devoir l’ensemble des références utilisées
+#### Serveur Calibre :
+- Basé sur une image Python (3.10-slim).
+- Installe Calibre Web et ses dépendances dans un environnement virtuel Python.
+- Configure une bibliothèque contenant un ebook modifié pour inclure un script malveillant dans ses métadonnées.
+- Expose le port 8083 pour permettre les interactions avec des clients.
+
+#### Client :
+- Utilise un navigateur web pour interagir avec l’interface exposée par le serveur Calibre.
+- Permet de visualiser les métadonnées compromises et d’observer l’exécution du script injecté.
+
+### Étapes principales
+
+#### Construction du conteneur serveur :
+1. Une image Docker est créée à partir de Python 3.10-slim.
+2. Mise à jour et installation des dépendances requises.
+3. Installation de Calibre Web dans un environnement virtuel Python.
+4. Configuration de la bibliothèque :
+   - Téléchargement d’un ebook de démonstration.
+   - Modification des métadonnées pour inclure un script XSS malveillant.
+5. Le serveur est configuré pour écouter sur le port 8083.
+
+#### Interaction client :
+1. Le client accède à l’interface web exposée par le serveur Calibre.
+2. Lors de la consultation des détails du livre modifié, le script malveillant s’exécute automatiquement dans le navigateur.
+
+#### Identifiant et mot de passe
+Lors de la première connexion, utilisez les identifiants par défaut fournis par Calibre Web :
+- **Nom d’utilisateur** : `admin`
+- **Mot de passe** : `admin123`
+
+Ces identifiants permettent d’accéder à l’interface d’administration pour tester la faille.
+
+#### Commande pour le workflow complet
+1. Construire l’image serveur avec la commande :
+   ```bash
+   docker build -t calibre-web-vulnerable .
+   ```
+2. Lancer le serveur avec :
+   ```bash
+   docker run -d -p 8083:8083 --name calibre-xss-demo calibre-web-vulnerable
+   ```
+3. Accéder à l’interface via [http://localhost:8083](http://localhost:8083).
+4. Renseigner le chemin `/library/metadata.db` lors de la configuration initiale :
+   ![Page de configuration initiale](img/conf_db.png)
+5. S’authentifier avec `admin / admin123`.
+6. Cliquer sur le livre "A Marriage Settlement" pour observer l’exploitation.
+
+### Description de la faille
+
+La faille exploitée ici est une vulnérabilité de type **XSS stockée**. Elle permet à un attaquant d’injecter un script malveillant dans les métadonnées d’un livre.
+
+#### Mécanisme de l’exploitation
+1. **Injection d’un script malveillant** :
+   - L’attaquant modifie les métadonnées d’un ebook avec un script malveillant inséré dans le champ `comments`.
+2. **Stockage du code malveillant** :
+   - Les métadonnées sont enregistrées sur le serveur, accessibles depuis l’interface web.
+3. **Exécution du script** :
+   - Lorsqu’un utilisateur consulte les détails du livre, le script s’exécute dans son navigateur.
+   - Conséquences possibles :
+     - Vol de cookies ou de données sensibles.
+     - Redirection vers un site malveillant.
+     - Modification de l’interface utilisateur.
 
 ## Glossaire
 
@@ -235,7 +279,7 @@ Joindre au devoir l’ensemble des références utilisées
 
 **Phishing** : une technique de fraude en ligne utilisée par des cybercriminels pour obtenir des informations sensibles (comme des identifiants de connexion, des mots de passe, des numéros de carte bancaire, ou d'autres informations personnelles) en se faisant passer pour une entité de confiance.
 
-**Cross Origin Ressource Sharing** : Les [CORS](#references) (Cross-Origin Resource Sharing) sont un mécanisme de sécurité implémenté par les navigateurs web pour permettre ou restreindre les requêtes HTTP provenant d'un domaine différent de celui depuis lequel la page web a été chargée. Ce mécanisme vise à protéger les utilisateurs contre les attaques de type Cross-Site Request Forgery (CSRF) et autres exploits impliquant des requêtes inter-domaines non autorisées.
+**Cross-Origin Resource Sharing** : Les [CORS](#references) (Cross-Origin Resource Sharing) sont un mécanisme de sécurité implémenté par les navigateurs web pour permettre ou restreindre les requêtes HTTP provenant d'un domaine différent de celui depuis lequel la page web a été chargée. Ce mécanisme vise à protéger les utilisateurs contre les attaques de type Cross-Site Request Forgery (CSRF) et autres exploits impliquant des requêtes inter-domaines non autorisées.
 
 **Cross-Site Request Forgery (CSRF)** : Une attaque **CSRF** force un utilisateur authentifié à exécuter des actions non désirées sur une application web dans laquelle il est authentifié.
 
@@ -244,5 +288,5 @@ Joindre au devoir l’ensemble des références utilisées
 
  - [Lien vers la CVE](https://www.cvedetails.com/cve/CVE-2024-39123/)
  - [Mise en oeuvre de la faille](https://www.exploit-db.com/exploits/52067)
- - [Cross Origin Ressource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+ - [Cross-Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
  - [Cross-Site Request Forgery (CSRF)](https://owasp.org/www-community/attacks/csrf)
