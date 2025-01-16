@@ -26,7 +26,7 @@ RUN wget \
 
 # Modifier l'ePub directement, avant de l'importer
 RUN ebook-meta /books/honore-de-balzac_a-marriage-settlement_clara-bell_advanced.epub \
-    --comments "<math><mtext><script> document.body.innerHTML = '<div style=\"position:fixed;top:0;left:0;width:100%;height:100%;background-color:black;z-index:9999;display:flex;align-items:center;justify-content:center;\"><iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&amp;loop=1\" style=\"width:80%;height:80%;border:none;\"></iframe></div>'; </script></mtext></math>"
+    --comments "<math><mtext><script> document.body.innerHTML = '<div style=\"position:fixed;top:0;left:0;width:100%;height:100%;background-color:black;z-index:9999;display:flex;align-items:center;justify-content:center;\"><iframe src=\"https://www.youtube.com/embed/W73uReoG3UU?autoplay=1&amp;loop=1\" style=\"width:80%;height:80%;border:none;\"></iframe></div>'; </script></mtext></math>"
 
 # Puis on ajoute ce livre "modifié" dans la bibliothèque
 RUN calibredb add --with-library=/library \
